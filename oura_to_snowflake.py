@@ -406,6 +406,141 @@ TABLES = {
 }
 
 
+# ── Column descriptions (applied once, only where missing) ───────────────────
+
+COLUMN_DESCRIPTIONS: dict[str, dict[str, str]] = {
+    "CALENDAR": {
+        "DAY":        "Calendar date (primary key of the dimension table)",
+        "WEEKDAY":    "ISO day of the week (1 = Monday … 7 = Sunday)",
+        "WEEKNUMBER": "ISO week number of the year (1–53)",
+        "YEAR":       "Calendar year (e.g. 2024)",
+        "MONTH":      "Month number (1 = January … 12 = December)",
+    },
+    "DAILY_CARDIOVASCULAR_AGE": {
+        "DAY":          "Date of the measurement",
+        "VASCULAR_AGE": "Estimated cardiovascular age derived from HRV and resting heart rate patterns",
+        "RAW_DATA":     "Full JSON payload returned by the Oura API",
+        "LOADED_AT":    "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "DAILY_ACTIVITY": {
+        "ID":                           "Unique identifier for the daily activity record",
+        "DAY":                          "Date of the activity summary",
+        "SCORE":                        "Overall activity score (0–100)",
+        "ACTIVE_CALORIES":              "Calories burned during active periods (kcal)",
+        "AVERAGE_MET_MINUTES":          "Average metabolic equivalent (MET) weighted by minutes of activity",
+        "EQUIVALENT_WALKING_DISTANCE":  "Total movement expressed as equivalent walking distance (meters)",
+        "HIGH_ACTIVITY_TIME":           "Time spent in high-intensity activity (seconds)",
+        "INACTIVITY_ALERTS":            "Number of inactivity alerts triggered during the day",
+        "LOW_ACTIVITY_TIME":            "Time spent in low-intensity activity (seconds)",
+        "MEDIUM_ACTIVITY_TIME":         "Time spent in medium-intensity activity (seconds)",
+        "NON_WEAR_TIME":                "Time the ring was not worn (seconds)",
+        "RESTING_TIME":                 "Time spent resting (seconds)",
+        "SEDENTARY_TIME":               "Time spent sedentary (seconds)",
+        "STEPS":                        "Total number of steps counted during the day",
+        "TARGET_CALORIES":              "Daily calorie burn target (kcal)",
+        "TARGET_METERS":                "Daily movement target expressed in meters",
+        "TOTAL_CALORIES":               "Total calories burned including BMR (kcal)",
+        "MEET_DAILY_TARGETS":           "Contributor score for meeting daily activity targets (0–100)",
+        "MOVE_EVERY_HOUR":              "Contributor score for moving at least once per hour (0–100)",
+        "RECOVERY_TIME":                "Contributor score based on adequate recovery time (0–100)",
+        "STAY_ACTIVE":                  "Contributor score for staying active throughout the day (0–100)",
+        "TRAINING_FREQUENCY":           "Contributor score based on training frequency over recent days (0–100)",
+        "TRAINING_VOLUME":              "Contributor score based on total training volume over recent days (0–100)",
+        "RAW_DATA":                     "Full JSON payload returned by the Oura API",
+        "LOADED_AT":                    "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "DAILY_READINESS": {
+        "ID":                           "Unique identifier for the daily readiness record",
+        "DAY":                          "Date of the readiness summary",
+        "SCORE":                        "Overall readiness score (0–100)",
+        "TEMPERATURE_DEVIATION":        "Deviation of skin temperature from personal baseline (°C)",
+        "TEMPERATURE_TREND_DEVIATION":  "Trend deviation of skin temperature over several nights (°C)",
+        "ACTIVITY_BALANCE":             "Contributor score reflecting balance between activity and rest (0–100)",
+        "BODY_TEMPERATURE":             "Contributor score based on skin temperature (0–100)",
+        "HRV_BALANCE":                  "Contributor score based on HRV trend relative to baseline (0–100)",
+        "PREVIOUS_DAY_ACTIVITY":        "Contributor score based on the previous day's activity level (0–100)",
+        "PREVIOUS_NIGHT":               "Contributor score based on the previous night's sleep (0–100)",
+        "RECOVERY_INDEX":               "Contributor score reflecting how well the body recovered overnight (0–100)",
+        "RESTING_HEART_RATE":           "Contributor score based on resting heart rate (0–100)",
+        "SLEEP_BALANCE":                "Contributor score based on cumulative sleep over the past two weeks (0–100)",
+        "RAW_DATA":                     "Full JSON payload returned by the Oura API",
+        "LOADED_AT":                    "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "DAILY_SLEEP": {
+        "ID":          "Unique identifier for the daily sleep record",
+        "DAY":         "Date of the sleep summary",
+        "SCORE":       "Overall sleep score (0–100)",
+        "DEEP_SLEEP":  "Contributor score based on the amount of deep (slow-wave) sleep (0–100)",
+        "EFFICIENCY":  "Contributor score based on the ratio of sleep time to time in bed (0–100)",
+        "LATENCY":     "Contributor score based on how quickly the user fell asleep (0–100)",
+        "REM_SLEEP":   "Contributor score based on the amount of REM sleep (0–100)",
+        "RESTFULNESS": "Contributor score based on the number of disturbances during sleep (0–100)",
+        "TIMING":      "Contributor score based on alignment of sleep with the user's circadian rhythm (0–100)",
+        "TOTAL_SLEEP": "Contributor score based on total sleep duration (0–100)",
+        "RAW_DATA":    "Full JSON payload returned by the Oura API",
+        "LOADED_AT":   "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "DAILY_STRESS": {
+        "ID":            "Unique identifier for the daily stress record",
+        "DAY":           "Date of the stress summary",
+        "STRESS_HIGH":   "Total time spent in a high-stress state (seconds)",
+        "RECOVERY_HIGH": "Total time spent in a high-recovery state (seconds)",
+        "DAY_SUMMARY":   "Qualitative summary of the day's stress and recovery balance (e.g. restored, stressful)",
+        "RAW_DATA":      "Full JSON payload returned by the Oura API",
+        "LOADED_AT":     "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "SLEEP_SESSIONS": {
+        "ID":                   "Unique identifier for the individual sleep session",
+        "DAY":                  "Calendar date associated with the sleep session (night of)",
+        "BEDTIME_START":        "Timestamp when the user went to bed",
+        "BEDTIME_END":          "Timestamp when the user got out of bed",
+        "AWAKE_TIME":           "Time spent awake during the sleep session (seconds)",
+        "DEEP_SLEEP_DURATION":  "Time spent in deep (slow-wave) sleep (seconds)",
+        "EFFICIENCY":           "Percentage of time in bed spent asleep (0–100)",
+        "LATENCY":              "Time elapsed before the user fell asleep (seconds)",
+        "LIGHT_SLEEP_DURATION": "Time spent in light sleep (seconds)",
+        "LOWEST_HEART_RATE":    "Lowest heart rate recorded during the session (bpm)",
+        "AVERAGE_HRV":          "Average heart rate variability (HRV) during the session (ms)",
+        "REM_SLEEP_DURATION":   "Time spent in REM sleep (seconds)",
+        "RESTLESS_PERIODS":     "Number of restless periods detected during the session",
+        "TIME_IN_BED":          "Total time spent in bed (seconds)",
+        "TOTAL_SLEEP_DURATION": "Total sleep time across all stages (seconds)",
+        "TYPE":                 "Type of sleep session (e.g. long_sleep, rest, nap)",
+        "RAW_DATA":             "Full JSON payload returned by the Oura API",
+        "LOADED_AT":            "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "WORKOUTS": {
+        "ID":             "Unique identifier for the workout record",
+        "DAY":            "Date on which the workout took place",
+        "ACTIVITY":       "Type of activity (e.g. running, cycling, strength_training)",
+        "CALORIES":       "Estimated calories burned during the workout (kcal)",
+        "DISTANCE":       "Distance covered during the workout (meters)",
+        "START_DATETIME": "Timestamp when the workout started",
+        "END_DATETIME":   "Timestamp when the workout ended",
+        "INTENSITY":      "Perceived intensity level of the workout (e.g. easy, moderate, hard)",
+        "LABEL":          "User-defined label or name for the workout",
+        "SOURCE":         "Source that recorded the workout (e.g. manual, confirmed, workout_heart_rate)",
+        "RAW_DATA":       "Full JSON payload returned by the Oura API",
+        "LOADED_AT":      "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "DAILY_SPO2": {
+        "ID":           "Unique identifier for the daily SpO2 record",
+        "DAY":          "Date of the SpO2 measurement",
+        "SPO2_AVERAGE": "Average blood oxygen saturation (SpO2) during sleep (%)",
+        "RAW_DATA":     "Full JSON payload returned by the Oura API",
+        "LOADED_AT":    "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+    "VO2_MAX": {
+        "ID":        "Unique identifier for the VO2 max record",
+        "DAY":       "Date on which the VO2 max estimate was calculated",
+        "TIMESTAMP": "Exact timestamp of the VO2 max calculation",
+        "VO2_MAX":   "Estimated maximal oxygen uptake (ml/kg/min), a measure of aerobic fitness",
+        "RAW_DATA":  "Full JSON payload returned by the Oura API",
+        "LOADED_AT": "Timestamp when the row was inserted or last updated in Snowflake",
+    },
+}
+
+
 # ── Oura API ──────────────────────────────────────────────────────────────────
 
 def oura_fetch(endpoint: str, start_date: str, end_date: str) -> list[dict]:
@@ -478,6 +613,38 @@ def ensure_fk(cur, table: str) -> None:
         pass  # contrainte déjà existante → on ignore
 
 
+def ensure_column_comments(cur, table: str) -> None:
+    """
+    Applies column-level COMMENT in Snowflake only where none exists yet.
+    Reads INFORMATION_SCHEMA.COLUMNS to identify columns without a comment,
+    then runs ALTER TABLE … ALTER COLUMN … COMMENT for each missing one.
+    Single quotes in descriptions are automatically escaped.
+    """
+    if table not in COLUMN_DESCRIPTIONS:
+        return
+
+    cur.execute(
+        "SELECT COLUMN_NAME, COMMENT "
+        f"FROM {SF_DATABASE}.INFORMATION_SCHEMA.COLUMNS "
+        "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
+        (SF_SCHEMA, table),
+    )
+    existing = {row[0]: row[1] for row in cur.fetchall()}
+
+    applied = 0
+    for col, desc in COLUMN_DESCRIPTIONS[table].items():
+        if not existing.get(col):                   # null or empty → apply
+            safe = desc.replace("'", "''")          # escape single quotes for SQL
+            cur.execute(
+                f"ALTER TABLE {SF_DATABASE}.{SF_SCHEMA}.{table} "
+                f"ALTER COLUMN {col} COMMENT '{safe}'"
+            )
+            applied += 1
+
+    if applied:
+        log.info(f"  [{table}] {applied} column comment(s) applied.")
+
+
 def upsert(cur, table: str, records: list[dict], merge_key: str = "ID") -> None:
     """
     Charge les records dans une table temporaire de staging (tout en VARCHAR),
@@ -547,6 +714,7 @@ def main() -> None:
         # ── Calendrier (toujours en premier) ──────────────────────────────────
         cur.execute(CALENDAR_DDL.format(db=SF_DATABASE, schema=SF_SCHEMA))
         populate_calendar(cur)
+        ensure_column_comments(cur, "CALENDAR")
 
         for table_name, cfg in TABLES.items():
             log.info(f"[{table_name}]")
@@ -556,6 +724,9 @@ def main() -> None:
 
             # Ajoute la FK DAY → CALENDAR(DAY) si pas encore présente
             ensure_fk(cur, table_name)
+
+            # Ajoute les descriptions de colonnes si manquantes
+            ensure_column_comments(cur, table_name)
 
             # Détermine la date de départ
             start = get_start_date(cur, table_name)
