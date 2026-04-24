@@ -109,18 +109,21 @@ TABLES = {
     "DAILY_CARDIOVASCULAR_AGE": {
         "endpoint": "daily_cardiovascular_age",
         "merge_key": "DAY",   # cet endpoint ne retourne pas de champ 'id'
+        "new_columns": [("PULSE_WAVE_VELOCITY", "NUMBER(8,4)")],
         "ddl": """
             CREATE TABLE IF NOT EXISTS {db}.{schema}.DAILY_CARDIOVASCULAR_AGE (
-                DAY             DATE          PRIMARY KEY,
-                VASCULAR_AGE    NUMBER(5),
-                RAW_DATA        VARIANT,
-                LOADED_AT       TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+                DAY                 DATE          PRIMARY KEY,
+                VASCULAR_AGE        NUMBER(5),
+                PULSE_WAVE_VELOCITY NUMBER(8,4),
+                RAW_DATA            VARIANT,
+                LOADED_AT           TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
             )
         """,
         "mapper": lambda r: {
-            "DAY":          r.get("day"),
-            "VASCULAR_AGE": r.get("vascular_age"),
-            "RAW_DATA":     json.dumps(r),
+            "DAY":                  r.get("day"),
+            "VASCULAR_AGE":         r.get("vascular_age"),
+            "PULSE_WAVE_VELOCITY":  r.get("pulse_wave_velocity"),
+            "RAW_DATA":             json.dumps(r),
         },
     },
 
@@ -417,10 +420,11 @@ COLUMN_DESCRIPTIONS: dict[str, dict[str, str]] = {
         "MONTH":      "Month number (1 = January … 12 = December)",
     },
     "DAILY_CARDIOVASCULAR_AGE": {
-        "DAY":          "Date of the measurement",
-        "VASCULAR_AGE": "Estimated cardiovascular age derived from HRV and resting heart rate patterns",
-        "RAW_DATA":     "Full JSON payload returned by the Oura API",
-        "LOADED_AT":    "Timestamp when the row was inserted or last updated in Snowflake",
+        "DAY":                  "Date of the measurement",
+        "VASCULAR_AGE":         "Estimated cardiovascular age derived from HRV and resting heart rate patterns",
+        "PULSE_WAVE_VELOCITY":  "Pulse wave velocity (m/s) — speed at which pressure waves travel through the arteries; higher values indicate arterial stiffness and elevated cardiovascular risk",
+        "RAW_DATA":             "Full JSON payload returned by the Oura API",
+        "LOADED_AT":            "Timestamp when the row was inserted or last updated in Snowflake",
     },
     "DAILY_ACTIVITY": {
         "ID":                           "Unique identifier for the daily activity record",
@@ -613,6 +617,28 @@ def ensure_fk(cur, table: str) -> None:
         pass  # contrainte déjà existante → on ignore
 
 
+def ensure_columns(cur, table: str, new_cols: list[tuple[str, str]]) -> None:
+    """
+    Ajoute les colonnes manquantes à une table existante (migration incrémentale).
+    new_cols : liste de (nom_colonne, type_sql).
+    Idempotent : vérifie INFORMATION_SCHEMA.COLUMNS avant chaque ALTER TABLE.
+    """
+    cur.execute(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+        "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
+        (SF_SCHEMA, table),
+    )
+    existing = {row[0] for row in cur.fetchall()}
+
+    for col, col_type in new_cols:
+        if col not in existing:
+            cur.execute(
+                f"ALTER TABLE {SF_DATABASE}.{SF_SCHEMA}.{table} "
+                f"ADD COLUMN {col} {col_type}"
+            )
+            log.info(f"  [{table}] Colonne {col} ({col_type}) ajoutée.")
+
+
 def ensure_column_comments(cur, table: str) -> None:
     """
     Applies column-level COMMENT in Snowflake only where none exists yet.
@@ -724,6 +750,10 @@ def main() -> None:
 
             # Ajoute la FK DAY → CALENDAR(DAY) si pas encore présente
             ensure_fk(cur, table_name)
+
+            # Ajoute les colonnes manquantes (migrations incrémentales)
+            if cfg.get("new_columns"):
+                ensure_columns(cur, table_name, cfg["new_columns"])
 
             # Ajoute les descriptions de colonnes si manquantes
             ensure_column_comments(cur, table_name)
