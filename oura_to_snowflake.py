@@ -623,23 +623,18 @@ def ensure_columns(cur, table: str, new_cols: list[tuple[str, str]]) -> None:
     """
     Ajoute les colonnes manquantes à une table existante (migration incrémentale).
     new_cols : liste de (nom_colonne, type_sql).
-    Idempotent : vérifie INFORMATION_SCHEMA.COLUMNS avant chaque ALTER TABLE.
+    Idempotent : ignore silencieusement l'erreur si la colonne existe déjà
+    (même pattern que ensure_fk — évite toute dépendance à INFORMATION_SCHEMA).
     """
-    cur.execute(
-        "SELECT COLUMN_NAME "
-        f"FROM {SF_DATABASE}.INFORMATION_SCHEMA.COLUMNS "
-        "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
-        (SF_SCHEMA, table),
-    )
-    existing = {row[0] for row in cur.fetchall()}
-
     for col, col_type in new_cols:
-        if col not in existing:
+        try:
             cur.execute(
                 f"ALTER TABLE {SF_DATABASE}.{SF_SCHEMA}.{table} "
                 f"ADD COLUMN {col} {col_type}"
             )
             log.info(f"  [{table}] Colonne {col} ({col_type}) ajoutée.")
+        except Exception:
+            pass  # colonne déjà existante → on ignore
 
 
 def ensure_column_comments(cur, table: str) -> None:
@@ -656,7 +651,7 @@ def ensure_column_comments(cur, table: str) -> None:
         "SELECT COLUMN_NAME, COMMENT "
         f"FROM {SF_DATABASE}.INFORMATION_SCHEMA.COLUMNS "
         "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
-        (SF_SCHEMA, table),
+        (SF_SCHEMA.upper(), table.upper()),
     )
     existing = {row[0]: row[1] for row in cur.fetchall()}
 
