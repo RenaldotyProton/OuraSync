@@ -626,7 +626,8 @@ def ensure_columns(cur, table: str, new_cols: list[tuple[str, str]]) -> None:
     Idempotent : vérifie INFORMATION_SCHEMA.COLUMNS avant chaque ALTER TABLE.
     """
     cur.execute(
-        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+        "SELECT COLUMN_NAME "
+        f"FROM {SF_DATABASE}.INFORMATION_SCHEMA.COLUMNS "
         "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s",
         (SF_SCHEMA, table),
     )
