@@ -6,13 +6,15 @@ Récupère les données de l'API Oura v2 et les charge dans Snowflake.
 Chargement incrémental : repart du MAX(DAY) connu dans chaque table.
 
 Usage:
-    python oura_to_snowflake.py
+    python oura_to_snowflake.py                  # mode incrémental normal
+    python oura_to_snowflake.py --days 30        # recharge les 30 derniers jours
 
 Prérequis :
     pip install -r requirements.txt
     Renseigner le fichier .env (voir .env.example)
 """
 
+import argparse
 import json
 import logging
 import os
@@ -727,8 +729,28 @@ def upsert(cur, table: str, records: list[dict], merge_key: str = "ID") -> None:
 # ── Point d'entrée ────────────────────────────────────────────────────────────
 
 def main() -> None:
-    today = date.today().strftime("%Y-%m-%d")
-    log.info(f"Démarrage ETL Oura → Snowflake  (jusqu'au {today})")
+    parser = argparse.ArgumentParser(description="Oura Ring → Snowflake ETL")
+    parser.add_argument(
+        "--days", type=int, default=None, metavar="N",
+        help="Force le rechargement des N derniers jours pour toutes les tables "
+             "(écrase la logique incrémentale habituelle)",
+    )
+    args = parser.parse_args()
+
+    today     = date.today()
+    today_str = today.strftime("%Y-%m-%d")
+
+    if args.days is not None:
+        forced_start = (today - timedelta(days=args.days)).strftime("%Y-%m-%d")
+        log.info(
+            f"Démarrage ETL Oura → Snowflake  — MODE RECHARGEMENT FORCÉ "
+            f"{args.days} jours ({forced_start} → {today_str})"
+        )
+    else:
+        forced_start = None
+        log.info(f"Démarrage ETL Oura → Snowflake  (mode incrémental, jusqu'au {today_str})")
+
+    today = today_str   # reste une chaîne pour la suite du code
 
     conn = sf_connect()
     cur  = conn.cursor()
@@ -758,8 +780,8 @@ def main() -> None:
             # Ajoute les descriptions de colonnes si manquantes
             ensure_column_comments(cur, table_name)
 
-            # Détermine la date de départ
-            start = get_start_date(cur, table_name)
+            # Détermine la date de départ (forcée ou incrémentale)
+            start = forced_start if forced_start is not None else get_start_date(cur, table_name)
             log.info(f"  Plage : {start} → {today}")
 
             # Récupère depuis l'API Oura
